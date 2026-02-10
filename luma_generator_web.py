@@ -47,20 +47,56 @@ def generate_id14(values):
         result.append(out)
     return "".join(result)
 
+def parse_id14(hex_str):
+    s = clean_hex(hex_str)
+    vals = []
+    offset = 0
+    for _ in range(5):
+        offset += 6
+        l1 = s[offset:offset+8]; offset += 8
+        offset += 2
+        l1a = s[offset:offset+8]; offset += 8
+        offset += 24
+
+        offset += 6
+        l2 = s[offset:offset+8]; offset += 8
+        offset += 2
+        l2a = s[offset:offset+8]; offset += 8
+        offset += 24
+
+        offset += 6
+        l3 = s[offset:offset+8]; offset += 8
+        offset += 2
+        l3a = s[offset:offset+8]; offset += 8
+        offset += 42
+
+        vals.append([hex_to_float(l1), hex_to_float(l1a), hex_to_float(l2), hex_to_float(l2a), hex_to_float(l3), hex_to_float(l3a)])
+    return vals
+
 st.set_page_config(layout="wide")
 st.title("Sharp Main ID14")
+
+if "vals" not in st.session_state:
+    st.session_state.vals = [v[:] for v in default_values]
+
+with st.expander("🔸Парсер Sharp Main ID14", expanded=False):
+    hex_input = st.text_area("HEX для Sharp ID14:", value=SHARP_ID14_DEFAULT_HEX, height=200, key="hex_in")
+    if st.button("🔍 Распарсить и заполнить поля", key="do_parse"):
+        st.session_state.vals = parse_id14(hex_input)
+        st.rerun()
 
 inputs = []
 for i in range(5):
     with st.expander(f"Sharp level {i}", True):
         c = st.columns(3)
-        l1  = c[0].number_input("L1",  value=default_values[i][0], min_value=None, max_value=None, step=0.0001, format="%.6f", key=f"l1_{i}")
-        l1a = c[1].number_input("L1A", value=default_values[i][1], min_value=None, max_value=None, step=0.0001, format="%.6f", key=f"l1a_{i}")
-        l2  = c[0].number_input("L2",  value=default_values[i][2], min_value=None, max_value=None, step=0.0001, format="%.6f", key=f"l2_{i}")
-        l2a = c[1].number_input("L2A", value=default_values[i][3], min_value=None, max_value=None, step=0.0001, format="%.6f", key=f"l2a_{i}")
-        l3  = c[0].number_input("L3",  value=default_values[i][4], min_value=None, max_value=None, step=0.0001, format="%.6f", key=f"l3_{i}")
-        l3a = c[1].number_input("L3A", value=default_values[i][5], min_value=None, max_value=None, step=0.0001, format="%.6f", key=f"l3a_{i}")
+        l1  = c[0].number_input("L1",  value=float(st.session_state.vals[i][0]), min_value=None, max_value=None, step=0.0001, format="%.6f", key=f"l1_{i}")
+        l1a = c[1].number_input("L1A", value=float(st.session_state.vals[i][1]), min_value=None, max_value=None, step=0.0001, format="%.6f", key=f"l1a_{i}")
+        l2  = c[0].number_input("L2",  value=float(st.session_state.vals[i][2]), min_value=None, max_value=None, step=0.0001, format="%.6f", key=f"l2_{i}")
+        l2a = c[1].number_input("L2A", value=float(st.session_state.vals[i][3]), min_value=None, max_value=None, step=0.0001, format="%.6f", key=f"l2a_{i}")
+        l3  = c[0].number_input("L3",  value=float(st.session_state.vals[i][4]), min_value=None, max_value=None, step=0.0001, format="%.6f", key=f"l3_{i}")
+        l3a = c[1].number_input("L3A", value=float(st.session_state.vals[i][5]), min_value=None, max_value=None, step=0.0001, format="%.6f", key=f"l3a_{i}")
         inputs.append([l1, l1a, l2, l2a, l3, l3a])
 
-if st.button("Generate HEX"):
+if st.button("Generate HEX", key="gen"):
     st.code(generate_id14(inputs), language="text")
+```0
