@@ -1,6 +1,5 @@
 import streamlit as st
 import struct
-from copy import deepcopy
 
 def float_to_hex(f):
     return struct.pack("<f", float(f)).hex()
@@ -20,10 +19,7 @@ SHARP_ID14_DEFAULT_HEX = clean_hex(
     "000000000000000000"
 )
 
-original_blocks = [
-    SHARP_ID14_DEFAULT_HEX[i:i+240]
-    for i in range(0, len(SHARP_ID14_DEFAULT_HEX), 240)
-]
+original_blocks = [SHARP_ID14_DEFAULT_HEX[i:i+240] for i in range(0, len(SHARP_ID14_DEFAULT_HEX), 240)]
 
 default_values = [
     [4.0, 0.186, 1.0, 0.152, 1.9, 0.058],
@@ -35,7 +31,6 @@ default_values = [
 
 def generate_id14(values):
     result = []
-    p = 0
     for i in range(5):
         block = original_blocks[i]
         out = ""
@@ -59,13 +54,13 @@ inputs = []
 for i in range(5):
     with st.expander(f"Sharp level {i}", True):
         c = st.columns(3)
-        l1 = c[0].number_input("L1", default_values[i][0], key=f"l1_{i}")
-        l1a = c[1].number_input("L1A", default_values[i][1], key=f"l1a_{i}")
-        l2 = c[0].number_input("L2", default_values[i][2], key=f"l2_{i}")
-        l2a = c[1].number_input("L2A", default_values[i][3], key=f"l2a_{i}")
-        l3 = c[0].number_input("L3", default_values[i][4], key=f"l3_{i}")
-        l3a = c[1].number_input("L3A", default_values[i][5], key=f"l3a_{i}")
+        l1  = c[0].number_input("L1",  value=default_values[i][0], min_value=None, max_value=None, step=0.0001, format="%.6f", key=f"l1_{i}")
+        l1a = c[1].number_input("L1A", value=default_values[i][1], min_value=None, max_value=None, step=0.0001, format="%.6f", key=f"l1a_{i}")
+        l2  = c[0].number_input("L2",  value=default_values[i][2], min_value=None, max_value=None, step=0.0001, format="%.6f", key=f"l2_{i}")
+        l2a = c[1].number_input("L2A", value=default_values[i][3], min_value=None, max_value=None, step=0.0001, format="%.6f", key=f"l2a_{i}")
+        l3  = c[0].number_input("L3",  value=default_values[i][4], min_value=None, max_value=None, step=0.0001, format="%.6f", key=f"l3_{i}")
+        l3a = c[1].number_input("L3A", value=default_values[i][5], min_value=None, max_value=None, step=0.0001, format="%.6f", key=f"l3a_{i}")
         inputs.append([l1, l1a, l2, l2a, l3, l3a])
 
 if st.button("Generate HEX"):
-    st.code(generate_id14(inputs))
+    st.code(generate_id14(inputs), language="text")
