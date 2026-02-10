@@ -1,6 +1,5 @@
 import streamlit as st
 import struct
-from copy import deepcopy
 
 def f2h(x):
     return struct.pack("<f", float(x)).hex()
@@ -12,7 +11,6 @@ def norm(s):
     return "".join(c for c in s.lower() if c in "0123456789abcdef")
 
 SHARP_ID14_ADDR = 0x110E63E
-LUMA_ADDR = 0x110A2EE
 
 SHARP_ID14_DEFAULT = norm(
     "0a490a140d000080401dc9763e3e250000803f2d0000803f"
@@ -38,7 +36,7 @@ SHARP_ID14_DEFAULT = norm(
 )
 
 def parse_id14(hexstr):
-    h = hexstr
+    h = norm(hexstr)
     p = 0
     out = []
     for _ in range(5):
@@ -80,26 +78,33 @@ def generate_id14(values):
     return "".join(out)
 
 st.set_page_config(layout="wide")
-st.title("Sharp Main ID14 + Luma Denoise")
-
-if "vals" not in st.session_state:
-    st.session_state.vals = parse_id14(SHARP_ID14_DEFAULT)
+st.title("Sharp Main ID14")
 
 levels = ["Sharp very low", "Sharp low", "Sharp med", "Sharp high", "Sharp very high"]
+
+if "id14_vals" not in st.session_state:
+    st.session_state.id14_vals = parse_id14(SHARP_ID14_DEFAULT)
+
 vals = []
 
 for i, name in enumerate(levels):
     with st.expander(name, True):
         c = st.columns(3)
-        l1  = c[0].number_input("L1",  st.session_state.vals[i][0], format="%.4f")
-        l1a = c[1].number_input("L1A", st.session_state.vals[i][1], format="%.4f")
-        l2  = c[0].number_input("L2",  st.session_state.vals[i][2], format="%.4f")
-        l2a = c[1].number_input("L2A", st.session_state.vals[i][3], format="%.4f")
-        l3  = c[0].number_input("L3",  st.session_state.vals[i][4], format="%.4f")
-        l3a = c[1].number_input("L3A", st.session_state.vals[i][5], format="%.4f")
+        l1  = c[0].number_input("L1",  value=float(st.session_state.id14_vals[i][0]), format="%.4f", key=f"id14_l1_{i}")
+        l1a = c[1].number_input("L1A", value=float(st.session_state.id14_vals[i][1]), format="%.4f", key=f"id14_l1a_{i}")
+        l2  = c[0].number_input("L2",  value=float(st.session_state.id14_vals[i][2]), format="%.4f", key=f"id14_l2_{i}")
+        l2a = c[1].number_input("L2A", value=float(st.session_state.id14_vals[i][3]), format="%.4f", key=f"id14_l2a_{i}")
+        l3  = c[0].number_input("L3",  value=float(st.session_state.id14_vals[i][4]), format="%.4f", key=f"id14_l3_{i}")
+        l3a = c[1].number_input("L3A", value=float(st.session_state.id14_vals[i][5]), format="%.4f", key=f"id14_l3a_{i}")
         vals.append([l1, l1a, l2, l2a, l3, l3a])
 
 if st.button("Generate Sharp ID14 HEX"):
     hexout = generate_id14(vals)
     st.code(hexout)
-    st.text_input("Patch", f"0x{SHARP_ID14_ADDR:X}:{hexout}")
+    st.text_input("Patch", value=f"0x{SHARP_ID14_ADDR:X}:{hexout}", key="patch_line")
+
+with st.expander("Parse HEX"):
+    h = st.text_area("HEX", value=SHARP_ID14_DEFAULT, height=200, key="parse_hex_area")
+    if st.button("Parse"):
+        st.session_state.id14_vals = parse_id14(h)
+        st.rerun()
