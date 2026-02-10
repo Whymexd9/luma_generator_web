@@ -4,10 +4,10 @@ from copy import deepcopy
 import numpy as np
 
 def float_to_hex(f):
-    return struct.pack('<f', float(f)).hex()
+    return struct.pack("<f", float(f)).hex()
 
 def hex_to_float(h):
-    return struct.unpack('<f', bytes.fromhex(h))[0]
+    return struct.unpack("<f", bytes.fromhex(h))[0]
 
 def clean_hex(s):
     return "".join(c for c in s.lower() if c in "0123456789abcdef")
@@ -102,12 +102,11 @@ def generate_bayer_hex(values_list):
     for i, v in enumerate(values_list):
         l1, l1a, l1b, l2, l2a, l2b, l3, l3a, l3b, l4, l4a, l4b, l5, l5a = v
         level_hex = (
-            f"{f2h(l1)}15{f2h(l1a)}1d{f2h(l1b)}0a0f0d"
-            f"{f2h(l2)}15{f2h(l2a)}1d{f2h(l2b)}0a0f0d"
-            f"{f2h(l3)}15{f2h(l3a)}1d{f2h(l3b)}0a0f0d"
-            f"{f2h(l4)}15{f2h(l4a)}1d{f2h(l4b)}0a0a0d"
-            f"{f2h(l5)}1d{f2h(l5a)}"
-            f"{tails[i]}"
+            f"{float_to_hex(l1)}15{float_to_hex(l1a)}1d{float_to_hex(l1b)}0a0f0d"
+            f"{float_to_hex(l2)}15{float_to_hex(l2a)}1d{float_to_hex(l2b)}0a0f0d"
+            f"{float_to_hex(l3)}15{float_to_hex(l3a)}1d{float_to_hex(l3b)}0a0f0d"
+            f"{float_to_hex(l4)}15{float_to_hex(l4a)}1d{float_to_hex(l4b)}0a0a0d"
+            f"{float_to_hex(l5)}1d{float_to_hex(l5a)}{tails[i]}"
         )
         lines.append(level_hex)
     return "".join(lines)
@@ -117,43 +116,35 @@ def parse_bayer_hex(hex_str):
     p = 0
     out = []
     for _ in range(5):
-        l1 = h2f(h[p:p+8]); p += 8
-        p += 2
-        l1a = h2f(h[p:p+8]); p += 8
-        p += 2
-        l1b = h2f(h[p:p+8]); p += 8
-        p += 6
-        l2 = h2f(h[p:p+8]); p += 8
-        p += 2
-        l2a = h2f(h[p:p+8]); p += 8
-        p += 2
-        l2b = h2f(h[p:p+8]); p += 8
-        p += 6
-        l3 = h2f(h[p:p+8]); p += 8
-        p += 2
-        l3a = h2f(h[p:p+8]); p += 8
-        p += 2
-        l3b = h2f(h[p:p+8]); p += 8
-        p += 6
-        l4 = h2f(h[p:p+8]); p += 8
-        p += 2
-        l4a = h2f(h[p:p+8]); p += 8
-        p += 2
-        l4b = h2f(h[p:p+8]); p += 8
-        p += 6
-        l5 = h2f(h[p:p+8]); p += 8
-        p += 2
-        l5a = h2f(h[p:p+8]); p += 8
-        p += 44
-        out.append([l1, l1a, l1b, l2, l2a, l2b, l3, l3a, l3b, l4, l4a, l4b, l5, l5a])
+        l1 = h[p:p+8]; p += 8; p += 2
+        l1a = h[p:p+8]; p += 8; p += 2
+        l1b = h[p:p+8]; p += 8; p += 6
+        l2 = h[p:p+8]; p += 8; p += 2
+        l2a = h[p:p+8]; p += 8; p += 2
+        l2b = h[p:p+8]; p += 8; p += 6
+        l3 = h[p:p+8]; p += 8; p += 2
+        l3a = h[p:p+8]; p += 8; p += 2
+        l3b = h[p:p+8]; p += 8; p += 6
+        l4 = h[p:p+8]; p += 8; p += 2
+        l4a = h[p:p+8]; p += 8; p += 2
+        l4b = h[p:p+8]; p += 8; p += 6
+        l5 = h[p:p+8]; p += 8; p += 2
+        l5a = h[p:p+8]; p += 8; p += 44
+        out.append([
+            hex_to_float(l1), hex_to_float(l1a), hex_to_float(l1b),
+            hex_to_float(l2), hex_to_float(l2a), hex_to_float(l2b),
+            hex_to_float(l3), hex_to_float(l3a), hex_to_float(l3b),
+            hex_to_float(l4), hex_to_float(l4a), hex_to_float(l4b),
+            hex_to_float(l5), hex_to_float(l5a),
+        ])
     return out
 
 st.set_page_config(page_title="HEX Sharp & Denoise Generator", layout="wide")
 st.title("🔧 Sharp & Bayer Denoise HEX Code Generator")
 
-tab2, tab6 = st.tabs(["🔍 Sharp Main ID14", "🌪️ Luma Denoise"])
+tab_sharp, tab_luma = st.tabs(["🔍 Sharp Main ID14", "🌪️ Luma Denoise"])
 
-with tab2:
+with tab_sharp:
     st.markdown("### 🔧 Sharp Main ID14")
 
     sharp_inputs2 = []
@@ -166,17 +157,14 @@ with tab2:
             l2a = cols[1].number_input("L2A", value=st.session_state.get(f"2sharp_l2a_{idx}_temp", level["default"][3]), format="%.4f", key=f"2sharp_l2a_{idx}")
             l3 = cols[0].number_input("L3", value=st.session_state.get(f"2sharp_l3_{idx}_temp", level["default"][4]), format="%.4f", key=f"2sharp_l3_{idx}")
             l3a = cols[1].number_input("L3A", value=st.session_state.get(f"2sharp_l3a_{idx}_temp", level["default"][5]), format="%.4f", key=f"2sharp_l3a_{idx}")
-
             sharp_inputs2.append([l1, l1a, l2, l2a, l3, l3a])
 
     if st.button("🚀 Сгенерировать Sharp HEX ID14", key="gen_id14"):
         full_hex = generate_sharp_hex_id14(sharp_inputs2, all_sharp_levels2, sharp_slices_id14)
         st.code(full_hex, language="text")
-        st.code(SHARP_ID14_DEFAULT_HEX, language="text")
 
     with st.expander("🔸Парсер Sharp Main ID14", expanded=False):
         hex_input_main2 = st.text_area("HEX для Main Sharp ID14:", value=SHARP_ID14_DEFAULT_HEX, height=200, key="main_parser_input2")
-
         if st.button("🔍 Распарсить Main Sharp HEX ID14", key="parse_id14"):
             s = clean_hex(hex_input_main2)
             offset = 0
@@ -201,7 +189,7 @@ with tab2:
             st.success("✅ Поля Main Sharp ID14 обновлены")
             st.rerun()
 
-with tab6:
+with tab_luma:
     st.markdown("### 🌪️ Luma Denoise")
 
     if "luma_defaults_loaded" not in st.session_state:
@@ -227,26 +215,20 @@ with tab6:
     for idx, level in enumerate(bayer_levels):
         with st.expander(level["name"], expanded=True):
             cols = st.columns(3)
-
             l1 = cols[0].number_input("L1", value=st.session_state.get(f"bayer_l1_{idx}_temp", level["default"][0]), format="%.6f", key=f"bayer_l1_{idx}")
             l1a = cols[1].number_input("L1A", value=st.session_state.get(f"bayer_l1a_{idx}_temp", level["default"][1]), format="%.6f", key=f"bayer_l1a_{idx}")
             l1b = cols[2].number_input("L1B", value=st.session_state.get(f"bayer_l1b_{idx}_temp", level["default"][2]), format="%.6f", key=f"bayer_l1b_{idx}")
-
             l2 = cols[0].number_input("L2", value=st.session_state.get(f"bayer_l2_{idx}_temp", level["default"][3]), format="%.6f", key=f"bayer_l2_{idx}")
             l2a = cols[1].number_input("L2A", value=st.session_state.get(f"bayer_l2a_{idx}_temp", level["default"][4]), format="%.6f", key=f"bayer_l2a_{idx}")
             l2b = cols[2].number_input("L2B", value=st.session_state.get(f"bayer_l2b_{idx}_temp", level["default"][5]), format="%.6f", key=f"bayer_l2b_{idx}")
-
             l3 = cols[0].number_input("L3", value=st.session_state.get(f"bayer_l3_{idx}_temp", level["default"][6]), format="%.6f", key=f"bayer_l3_{idx}")
             l3a = cols[1].number_input("L3A", value=st.session_state.get(f"bayer_l3a_{idx}_temp", level["default"][7]), format="%.6f", key=f"bayer_l3a_{idx}")
             l3b = cols[2].number_input("L3B", value=st.session_state.get(f"bayer_l3b_{idx}_temp", level["default"][8]), format="%.6f", key=f"bayer_l3b_{idx}")
-
             l4 = cols[0].number_input("L4", value=st.session_state.get(f"bayer_l4_{idx}_temp", level["default"][9]), format="%.6f", key=f"bayer_l4_{idx}")
             l4a = cols[1].number_input("L4A", value=st.session_state.get(f"bayer_l4a_{idx}_temp", level["default"][10]), format="%.6f", key=f"bayer_l4a_{idx}")
             l4b = cols[2].number_input("L4B", value=st.session_state.get(f"bayer_l4b_{idx}_temp", level["default"][11]), format="%.6f", key=f"bayer_l4b_{idx}")
-
             l5 = cols[0].number_input("L5", value=st.session_state.get(f"bayer_l5_{idx}_temp", level["default"][12]), format="%.6f", key=f"bayer_l5_{idx}")
             l5a = cols[1].number_input("L5A", value=st.session_state.get(f"bayer_l5a_{idx}_temp", level["default"][13]), format="%.6f", key=f"bayer_l5a_{idx}")
-
             bayer_inputs.append([l1, l1a, l1b, l2, l2a, l2b, l3, l3a, l3b, l4, l4a, l4b, l5, l5a])
 
     if st.button("🚀 Сгенерировать HEX (Luma Denoise)", key="gen_luma"):
